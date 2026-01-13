@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartCane Monitoring Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        /* ============================= */
+        /* SECTION 1: USER PROFILE       */
+        /* ============================= */
+        .profile-section {
+            background: white;
+            padding: 30px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            margin-bottom: 3px;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .profile-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3em;
+            color: white;
+        }
+
+        .profile-info h2 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .profile-meta {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+            margin-left: 10px;
+        }
+
+        .status-online {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-alert {
+            background: #fee2e2;
+            color: #991b1b;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .data-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            transition: transform 0.3s;
+        }
+
+        .data-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .data-icon {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .data-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .data-value {
+            color: #333;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+
+        .data-value.danger {
+            color: #ef4444;
+        }
+
+        .data-value.success {
+            color: #10b981;
+        }
+
+        .data-value.warning {
+            color: #f59e0b;
+        }
+
+        .data-unit {
+            font-size: 0.6em;
+            color: #666;
+            font-weight: 400;
+        }
+
+        .map-container {
+            margin-top: 20px;
+            height: 300px;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        /* ============================= */
+        /* SECTION 2: HISTORY DATA       */
+        /* ============================= */
+        .history-section {
+            background: white;
+            padding: 30px;
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #667eea;
+        }
+
+        .history-header h2 {
+            color: #667eea;
+            font-size: 1.8em;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.active,
+        .filter-btn:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .export-btn {
+            padding: 10px 24px;
+            border: 2px solid #10b981;
+            background: #10b981;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .export-btn:hover {
+            background: #059669;
+            border-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        .history-table thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .history-table th {
+            padding: 15px;
+            text-align: left;
+            color: #666;
+            font-weight: 600;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .history-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e9ecef;
+            color: #333;
+        }
+
+        .history-table tbody tr {
+            transition: background 0.2s;
+        }
+
+        .history-table tbody tr:hover {
+            background: #f8f9fa;
+        }
+
+        .history-container {
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .history-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .history-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .history-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .timestamp-cell {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .status-cell {
+            font-weight: 600;
+        }
+
+        .status-cell.normal {
+            color: #10b981;
+        }
+
+        .status-cell.warning {
+            color: #f59e0b;
+        }
+
+        .status-cell.danger {
+            color: #ef4444;
+        }
+
+        .location-link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .location-link:hover {
+            text-decoration: underline;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            font-size: 1.2em;
+            color: #667eea;
+        }
+
+        .last-update {
+            text-align: center;
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #e9ecef;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .data-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .filter-buttons {
+                flex-wrap: wrap;
+            }
+
+            .history-table {
+                font-size: 0.85em;
+            }
+
+            .history-table th,
+            .history-table td {
+                padding: 10px 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- HEADER -->
+        <div class="header">
+            <h1>🦯 SmartCane IoT Monitoring</h1>
+            <p>Real-time Monitoring & Data History</p>
+        </div>
+
+        <!-- ================================== -->
+        <!-- SECTION 1: USER PROFILE & LATEST DATA -->
+        <!-- ================================== -->
+        <div class="profile-section">
+            <div class="profile-header">
+                <div class="profile-avatar">👤</div>
+                <div class="profile-info">
+                    <h2 id="userName">Loading...</h2>
+                    <div class="profile-meta">
+                        <span id="userAge">-- tahun</span> • 
+                        <span id="userPhone">+62-----------</span>
+                        <span class="status-badge status-online" id="deviceStatus">● Online</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="color: #667eea; margin-bottom: 20px;">📊 Data Terkini</h3>
+            <div class="data-grid">
+                <div class="data-card">
+                    <div class="data-icon">🚨</div>
+                    <div class="data-label">Status</div>
+                    <div class="data-value" id="currentStatus">Normal</div>
+                </div>
+
+                <div class="data-card">
+                    <div class="data-icon">⚡</div>
+                    <div class="data-label">Acceleration</div>
+                    <div class="data-value" id="currentAccel">
+                        --<span class="data-unit">G</span>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <div class="data-icon">↔️</div>
+                    <div class="data-label">Roll</div>
+                    <div class="data-value" id="currentRoll">
+                        --<span class="data-unit">°</span>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <div class="data-icon">↕️</div>
+                    <div class="data-label">Pitch</div>
+                    <div class="data-value" id="currentPitch">
+                        --<span class="data-unit">°</span>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <div class="data-icon">📍</div>
+                    <div class="data-label">Latitude</div>
+                    <div class="data-value" id="currentLat">--</div>
+                </div>
+
+                <div class="data-card">
+                    <div class="data-icon">📍</div>
+                    <div class="data-label">Longitude</div>
+                    <div class="data-value" id="currentLon">--</div>
+                </div>
+            </div>
+
+            <h3 style="color: #667eea; margin: 25px 0 15px 0;">🗺️ Lokasi Real-time</h3>
+            <div id="map" class="map-container"></div>
+
+            <div class="last-update">
+                <strong>Terakhir Update:</strong> <span id="lastUpdate">--</span>
+            </div>
+        </div>
+
+        <!-- ================================== -->
+        <!-- SECTION 2: HISTORY DATA            -->
+        <!-- ================================== -->
+        <div class="history-section">
+            <div class="history-header">
+                <h2>📜 Riwayat Data</h2>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <div class="filter-buttons">
+                        <button class="filter-btn active" onclick="filterHistory('all')">Semua</button>
+                        <button class="filter-btn" onclick="filterHistory('normal')">Normal</button>
+                        <button class="filter-btn" onclick="filterHistory('alert')">Alert</button>
+                    </div>
+                    <button class="export-btn" onclick="exportToExcel()">
+                        📥 Download Excel
+                    </button>
+                </div>
+            </div>
+
+            <div class="history-container">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Waktu</th>
+                            <th>Status</th>
+                            <th>Accel (G)</th>
+                            <th>Roll (°)</th>
+                            <th>Pitch (°)</th>
+                            <th>Lokasi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTable">
+                        <tr>
+                            <td colspan="6" class="loading">
+                                Memuat data...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Leaflet for Maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <script>
+
+/* ================= TIME ================= */
+function formatWIB(ts) {
+    if (!ts) return "-";
+    // Jika ts adalah angka (dari Server TIMESTAMP), konversi ke objek Date
+    const date = new Date(ts); 
+    
+    return date.toLocaleString("id-ID", {
+        timeZone: "Asia/Jakarta",
+        day: "2-digit", 
+        month: "2-digit", 
+        year: "numeric",
+        hour: "2-digit", 
+        minute: "2-digit", 
+        second: "2-digit"
+    }) + " WIB";
+}
+
+function durasiJatuh(start, end) {
+  if (!start || !end) return "-";
+  const d = Math.floor((end - start) / 1000);
+  return d + " detik";
+}
+
+        // ============================
+        // Firebase Configuration
+        // ============================
+        const firebaseConfig = {
+            apiKey: "AIzaSyAu8fXBgirVUJgA528cdC31U0tSKXMhbpc",
+            authDomain: "smartcane-54792.firebaseapp.com",
+            databaseURL: "https://smartcane-54792-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "smartcane-54792",
+            storageBucket: "smartcane-54792.firebasestorage.app",
+            messagingSenderId: "275338969738",
+            appId: "1:275338969738:web:56e3c555fa097fcca36373",
+            measurementId: "G-DRXKV9FK5N"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        let map;
+        let marker;
+        let currentFilter = 'all';
+        let historyData = [];
+
+        // ============================
+        // Initialize Map
+        // ============================
+        function initMap() {
+            map = L.map('map').setView([-5.4292, 105.2625], 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            marker = L.marker([-5.4292, 105.2625]).addTo(map)
+                .bindPopup('Menunggu data lokasi...')
+                .openPopup();
+        }
+
+        // ============================
+        // Load User Profile
+        // ============================
+        function loadUserProfile() {
+            // Set default profile karena database tidak memiliki data profile
+            document.getElementById('userName').textContent = 'Pengguna Smart Cane';
+            document.getElementById('userAge').textContent = '--';
+            document.getElementById('userPhone').textContent = '--';
+            
+            const statusBadge = document.getElementById('deviceStatus');
+            statusBadge.className = 'status-badge status-online';
+            statusBadge.textContent = '● Online';
+        }
+
+        // ============================
+        // Load Latest Data
+        // ============================
+        function loadLatestData() {
+            database.ref('smartcane/latest').on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    // Update status
+                    const statusEl = document.getElementById('currentStatus');
+                    statusEl.textContent = data.status || 'AMAN';
+                    
+                    if (data.status === 'JATUH') {
+                        statusEl.className = 'data-value danger';
+                    } else {
+                        statusEl.className = 'data-value success';
+                    }
+                    
+                    // Update acceleration (dalam m/s², bukan G)
+                    const accelEl = document.getElementById('currentAccel');
+                    const accelValue = parseFloat(data.acceleration) || 0;
+                    accelEl.innerHTML = accelValue.toFixed(2) + '<span class="data-unit">m/s²</span>';
+                    if (accelValue > 20.0) {
+                        accelEl.className = 'data-value danger';
+                    } else if (accelValue > 15.0) {
+                        accelEl.className = 'data-value warning';
+                    } else {
+                        accelEl.className = 'data-value success';
+                    }
+                    
+                    // Update roll
+                    document.getElementById('currentRoll').innerHTML = 
+                        parseFloat(data.roll).toFixed(1) + '<span class="data-unit">°</span>';
+                    
+                    // Update pitch
+                    document.getElementById('currentPitch').innerHTML = 
+                        parseFloat(data.pitch).toFixed(1) + '<span class="data-unit">°</span>';
+                    
+                    // Update location
+                    const lat = parseFloat(data.latitude) || 0;
+                    const lon = parseFloat(data.longitude) || 0;
+                    
+                    document.getElementById('currentLat').textContent = lat.toFixed(6);
+                    document.getElementById('currentLon').textContent = lon.toFixed(6);
+                    
+                    // Update map
+                    if (lat !== 0 && lon !== 0) {
+                        const latlng = [lat, lon];
+                        marker.setLatLng(latlng);
+                        map.setView(latlng, 15);
+                        marker.bindPopup(
+                            '<strong>Lokasi Terkini</strong><br>' +
+                            'Status: ' + data.status + '<br>' +
+                            lat.toFixed(6) + ', ' + lon.toFixed(6)
+                        ).openPopup();
+                    }
+                    
+                    // Update timestamp
+                    //document.getElementById('lastUpdate').textContent = data.timestamp || '--';
+                    document.getElementById('lastUpdate').textContent = formatWIB(data.timestamp);
+                }
+            });
+        }
+
+        // ============================
+        // Load History Data
+        // ============================
+        function loadHistoryData() {
+            database.ref('smartcane/history').limitToLast(100).on('value', (snapshot) => {
+                historyData = [];
+                snapshot.forEach((childSnapshot) => {
+                    historyData.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                
+                historyData.reverse(); // Newest first
+                displayHistory();
+            });
+        }
+
+        // ============================
+        // Display History
+        // ============================
+       function displayHistory() {
+    const tableBody = document.getElementById('historyTable');
+    
+    let filteredData = historyData;
+    if (currentFilter === 'normal') {
+        filteredData = historyData.filter(d => d.status === 'AMAN');
+    } else if (currentFilter === 'alert') {
+        filteredData = historyData.filter(d => d.status === 'JATUH');
+    }
+    
+    if (filteredData.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="no-data">
+                    Tidak ada data ${currentFilter === 'all' ? '' : currentFilter}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+    
+    tableBody.innerHTML = filteredData.map(data => {
+        let statusClass = 'normal';
+        if (data.status === 'JATUH') {
+            statusClass = 'danger';
+        }
+        
+        const lat = parseFloat(data.latitude) || 0;
+        const lon = parseFloat(data.longitude) || 0;
+        
+        // PERBAIKAN 1: Gunakan fungsi formatWIB() untuk timestamp
+        const waktuTampil = formatWIB(data.timestamp);
+
+        // PERBAIKAN 2: Perbaikan URL Google Maps (tanda @ dan urutan koordinat)
+        const locationText = (lat !== 0 && lon !== 0) 
+            ? `<a href="https://www.google.com/maps?q=${lat},${lon}" target="_blank" class="location-link">
+                📍 ${lat.toFixed(4)}, ${lon.toFixed(4)}
+               </a>`
+            : '<span style="color:#999">Tanpa GPS</span>';
+        
+        return `
+            <tr>
+                <td class="timestamp-cell">${waktuTampil}</td>
+                <td class="status-cell ${statusClass}">${data.status || 'N/A'}</td>
+                <td>${parseFloat(data.acceleration).toFixed(2)}</td>
+                <td>${parseFloat(data.roll).toFixed(1)}</td>
+                <td>${parseFloat(data.pitch).toFixed(1)}</td>
+                <td>${locationText}</td>
+            </tr>
+        `;
+    }).join('');
+}
+
+        // ============================
+        // Filter History
+        // ============================
+        function filterHistory(filter) {
+            currentFilter = filter;
+            
+            // Update button styles
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            displayHistory();
+        }
+
+        // ============================
+        // Export to Excel
+        // ============================
+       function exportToExcel() {
+    // 1. Ambil data berdasarkan filter yang aktif
+    let dataToExport = historyData;
+    if (currentFilter === 'normal') {
+        dataToExport = historyData.filter(d => d.status === 'AMAN');
+    } else if (currentFilter === 'alert') {
+        dataToExport = historyData.filter(d => d.status === 'JATUH');
+    }
+
+    if (dataToExport.length === 0) {
+        alert('Tidak ada data untuk di-export!');
+        return;
+    }
+
+    // 2. Siapkan data untuk Excel dengan mengonversi timestamp terlebih dahulu
+    const excelData = dataToExport.map((data, index) => {
+        // KONVERSI DI SINI: Panggil fungsi formatWIB yang sudah kita buat sebelumnya
+        const waktuWIB = formatWIB(data.timestamp);
+
+        const lat = parseFloat(data.latitude) || 0;
+        const lon = parseFloat(data.longitude) || 0;
+
+        return {
+            'No': index + 1,
+            'Waktu (WIB)': waktuWIB, // Menggunakan hasil konversi teks, bukan angka mentah
+            'Status': data.status || 'N/A',
+            'Acceleration (m/s²)': parseFloat(data.acceleration).toFixed(2),
+            'Roll (°)': parseFloat(data.roll).toFixed(1),
+            'Pitch (°)': parseFloat(data.pitch).toFixed(1),
+            'Latitude': lat,
+            'Longitude': lon,
+            'Google Maps': (lat !== 0 && lon !== 0) 
+                ? `https://www.google.com/maps?q=${lat},${lon}`
+                : 'N/A'
+        };
+    });
+
+    // 3. Proses pembuatan file Excel
+    const userName = document.getElementById('userName').textContent || 'User';
+    const currentDate = new Date().toLocaleDateString('id-ID').replace(/\//g, '-');
+    const fileName = `SmartCane_Report_${userName}_${currentDate}.xlsx`;
+
+    const ws = XLSX.utils.json_to_sheet(excelData);
+
+    // Mengatur lebar kolom agar rapi
+    const colWidths = [
+        { wch: 5 },  // No
+        { wch: 25 }, // Waktu (WIB)
+        { wch: 15 }, // Status
+        { wch: 20 }, // Acceleration
+        { wch: 10 }, // Roll
+        { wch: 10 }, // Pitch
+        { wch: 15 }, // Latitude
+        { wch: 15 }, // Longitude
+        { wch: 45 }  // Google Maps
+    ];
+    ws['!cols'] = colWidths;
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Riwayat Data');
+
+    // 4. Download file
+    XLSX.writeFile(wb, fileName);
+}
+
+        // ============================
+        // Initialize on Load
+        // ============================
+        window.addEventListener('load', () => {
+            initMap();
+            loadUserProfile();
+            loadLatestData();
+            loadHistoryData();
+            
+            console.log('Dashboard initialized!');
+        });
+
+        // Auto refresh every 1 second
+        setInterval(() => {
+            // Data updates automatically via Firebase listeners
+        }, 1000);
+    </script>
+</body>
+</html>
